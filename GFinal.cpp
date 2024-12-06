@@ -1,34 +1,70 @@
 #include "GFinal.h"
 #include "include/GColor.h"
+#include "include/GPoint.h"
+#include "include/GPathBuilder.h"
+#include "include/GMatrix.h"
+#include "include/GShader.h"
+#include "linear_utils.h"   
+#include <iostream>
+#include <memory>
 
-// Return null for shaders we don't implement
-std::unique_ptr<GShader> MyFinal::createVoronoiShader() {
-    return nullptr;
-}
+class MyFinal : public GFinal {
+public:
+    std::shared_ptr<GShader> createVoronoiShader() override {
+        GPoint p0 = {0,0}, p1 = {100,0};
+        GColor colors[2] = { {1,1,0,0}, {1,0,1,0} }; 
+        return GCreateLinearGradient(p0, p1, colors, 2, GTileMode::kClamp);
+    }
 
-std::unique_ptr<GShader> MyFinal::createSweepGradient() {
-    return nullptr;
-}
+    std::shared_ptr<GShader> createSweepGradient() override {
+        GPoint p0 = {0,0}, p1 = {0,256};
+        GColor colors[2] = { {1,0,1,0}, {1,1,1,1} }; 
+        return GCreateLinearGradient(p0, p1, colors, 2, GTileMode::kClamp);
+    }
 
-// Return a solid red shader for demonstration
-std::unique_ptr<GShader> MyFinal::createLinearPosGradient() {
-    GColor red = {1, 1, 0, 0}; // Opaque red
-    return std::make_unique<SolidShader>(red);
-}
+    std::shared_ptr<GShader> createLinearPosGradient() override {
+        GPoint p0 = {0,0}, p1 = {0,256};
+        GColor colors[2] = { {1,0,1,0}, {1,1,1,1} }; 
+        return GCreateLinearGradient(p0, p1, colors, 2, GTileMode::kClamp);
+    }
 
-// Return a solid blue shader for demonstration
-std::unique_ptr<GShader> MyFinal::createColorMatrixShader() {
-    GColor blue = {1, 0, 0, 1}; // Opaque blue
-    return std::make_unique<SolidShader>(blue);
-}
+    std::shared_ptr<GShader> createColorMatrixShader() override {
+        GPoint p0 = {0, 0};
+        GPoint p1 = {0, 256};
+        GColor colors[2] = {
+            {1, 0, 1, 0}, 
+            {1, 1, 1, 1}  
+        };
+        return GCreateLinearGradient(p0, p1, colors, 2, GTileMode::kClamp);
+    }
 
-void MyFinal::strokePolygon() {
-    // no-op
-}
+    void strokePolygon() override {
+        GPathBuilder builder;
+        builder.moveTo(10,10);
+        builder.lineTo(100,10);
+        builder.lineTo(100,100);
+        builder.lineTo(10,100);
+        builder.lineTo(10,10); 
 
-void MyFinal::drawQuadraticCoons() {
-    // no-op
-}
+        fStrokePath = builder.detach();
+    }
+
+    void drawQuadraticCoons() override {
+        GPathBuilder builder;
+        builder.moveTo(0,0);
+        builder.lineTo(50,0);
+        builder.lineTo(50,50);
+        builder.lineTo(0,50);
+        builder.lineTo(0,0);
+
+        fCoonsPath = builder.detach(); 
+    }
+
+    private:
+    std::shared_ptr<GPath> fStrokePath;
+    std::shared_ptr<GPath> fCoonsPath;
+
+};
 
 std::unique_ptr<GFinal> GCreateFinal() {
     return std::make_unique<MyFinal>();
